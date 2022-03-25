@@ -3,95 +3,70 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
-contract SharkOutlawSquadVX is Ownable, EIP712, ERC721Enumerable {
-    using Counters for Counters.Counter;
+contract SharkOutlawSquadVX is Ownable, ERC721Enumerable {
     using Strings for uint256;
 
     // Specification
     uint256 public constant TOTAL_MAX_QTY = 7777;
-    uint256 public constant MAX_QTY_PER_MINTER = 1;
-    uint256 public constant PUBLIC_MINT_PRICE = 0 ether;
-    uint256 public PUBLIC_NOPIXEL_MINT_PRICE = 0.2 ether;
+    uint256 public constant MINT_PRICE = 0 ether;
+    uint256 public NOPIXEL_MINT_PRICE = 0.2 ether;
 
+    uint256 public publicMintedQty = 0;
     mapping(uint256 => uint256) public tokenIdMinterToTokenQty;
     // Path to genesis and pixel smart contract
     address private _genesisSmartContract =
         0xd9145CCE52D386f254917e481eB44e9943F39138;
     address private _pixelSmartContract =
-        0xd8b934580fcE35a11B58C6D73aDeE468a2833fa8;
-    Counters.Counter private _tokenIds;
+        0xf8e81D47203A594245E36C48e151709F0C19fBe8;
     string private _contractURI;
     string private _tokenBaseURI;
 
     // Sales status
     bool public isSalesActivated;
 
-    constructor()
-        ERC721("Shark Outlaw Squad VX", "SHARKVX")
-        EIP712("Shark Outlaw Squad VX", "1")
-    {}
+    constructor() ERC721("Shark Outlaw Squad VX", "SHARKVX") {}
 
-    function mintNFT(uint256 genesisToken, uint256 pixelToken)
-        external
-        payable
-    {
-        require(_tokenIds.current() <= TOTAL_MAX_QTY, "Exceed total max limit");
+    function mintWithPixel(uint256 tokenId) external {
+        require(totalSupply() + 1 <= TOTAL_MAX_QTY, "Exceed total max limit");
         require(isSalesActivated, "Public sale is closed");
         require(
-            tokenIdMinterToTokenQty[genesisToken] + 1 <= MAX_QTY_PER_MINTER,
+            tokenIdMinterToTokenQty[tokenId] + 1 <= 1,
             "Exceed sales max quantity per Genesis NFT"
         );
-        address genesisOwner = genesisCheckOwner(genesisToken);
-        address pixelOwner = pixelCheckOwner(pixelToken);
-        uint256 newItemId = 0;
+        address genesisOwner = ERC721(_genesisSmartContract).ownerOf(tokenId);
+        address pixelOwner = ERC721(_pixelSmartContract).ownerOf(tokenId);
         if (genesisOwner == msg.sender && pixelOwner == msg.sender) {
-            tokenIdMinterToTokenQty[genesisToken] += 1;
-            _tokenIds.increment();
-            newItemId = _tokenIds.current();
-            _safeMint(msg.sender, newItemId);
-        } else if (genesisOwner == msg.sender && pixelOwner != msg.sender) {
-            require(msg.value >= PUBLIC_NOPIXEL_MINT_PRICE, "Insufficient ETH");
-            (bool success, ) = payable(msg.sender).call{
-                value: PUBLIC_NOPIXEL_MINT_PRICE
-            }("");
-            require(success, "Ethereum Not Received");
-            tokenIdMinterToTokenQty[genesisToken] += 1;
-            _tokenIds.increment();
-            newItemId = _tokenIds.current();
-            _safeMint(msg.sender, newItemId);
+            tokenIdMinterToTokenQty[tokenId] += 1;
+            publicMintedQty++;
+            _safeMint(msg.sender, totalSupply() + 1);
         } else {
             require(false, "Not Owner");
         }
     }
 
-    function genesisCheckOwner(uint256 _id) private returns (address) {
-        (bool success, bytes memory data) = _genesisSmartContract.call(
-            abi.encodeWithSignature("ownerOf(uint256)", _id)
+    function mintWithoutPixel(uint256 tokenId) external payable {
+        require(totalSupply() + 1 <= TOTAL_MAX_QTY, "Exceed total max limit");
+        require(isSalesActivated, "Public sale is closed");
+        require(
+            tokenIdMinterToTokenQty[tokenId] + 1 <= 1,
+            "Exceed sales max quantity per Genesis NFT"
         );
-        require(success, "Owner Invalid");
-        // Decode data
-        address owner = abi.decode(data, (address));
-
-        return owner;
-    }
-
-    function pixelCheckOwner(uint256 _id) private returns (address) {
-        (bool success, bytes memory data) = _pixelSmartContract.call(
-            abi.encodeWithSignature("ownerOf(uint256)", _id)
-        );
-        if (success) {
-            address owner = abi.decode(data, (address));
-            return owner;
+        address genesisOwner = ERC721(_genesisSmartContract).ownerOf(tokenId);
+        if (genesisOwner == msg.sender) {
+            require(msg.value >= NOPIXEL_MINT_PRICE, "Insufficient ETH");
+            (bool success, ) = payable(msg.sender).call{
+                value: NOPIXEL_MINT_PRICE
+            }("");
+            require(success, "Ethereum Not Received");
+            tokenIdMinterToTokenQty[tokenId] += 1;
+            publicMintedQty++;
+            _safeMint(msg.sender, totalSupply() + 1);
         } else {
-            return 0x0000000000000000000000000000000000000000;
+            require(false, "Not Owner");
         }
     }
 
@@ -100,8 +75,8 @@ contract SharkOutlawSquadVX is Ownable, EIP712, ERC721Enumerable {
         onlyOwner
         returns (uint256)
     {
-        PUBLIC_NOPIXEL_MINT_PRICE = price;
-        return PUBLIC_NOPIXEL_MINT_PRICE;
+        NOPIXEL_MINT_PRICE = price;
+        return NOPIXEL_MINT_PRICE;
     }
 
     function withdrawAll() external onlyOwner {
