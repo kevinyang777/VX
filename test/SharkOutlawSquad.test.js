@@ -29,6 +29,7 @@ contract('SharkOutlawSquadVX', (addresses) => {
     await SharkOutlawSquad.gift([ownerAddress]) // id 1
     await SharkOutlawSquad.gift([ownerAddress]) // id 2
     await SharkOutlawSquad.gift([ownerAddress]) // id 3
+    await SharkOutlawSquad.gift([ownerAddress]) // id 4
     await SharkOutlawSquadPixel.gift([ownerAddress]) // id 1
     await instance.transferOwnership(ownerAddress, { from: deployerAddress })
   })
@@ -80,48 +81,91 @@ contract('SharkOutlawSquadVX', (addresses) => {
       const fn = instance.mintWithPixel(tokenId, { from: ownerAddress })
       return expect(fn).to.be.fulfilled
     })
+
+    it('owner cannot mint twice with same tokenid', async () => {
+      const tokenId = 1
+      const fn = instance.mintWithPixel(tokenId, { from: ownerAddress })
+      return expect(fn).to.be.rejected
+    })
   })
 
   describe('mintWithoutPixel', () => {
     it('owner can mint with paying 0.2 ETH', async () => {
       const tokenId = 2
-      const fn = instance
-        .mintWithoutPixel(tokenId, {
-          value: 200000000000000000,
-          from: ownerAddress,
-        })
+      const fn = instance.mintWithoutPixel(tokenId, {
+        value: 200000000000000000,
+        from: ownerAddress,
+      })
       return expect(fn).to.be.fulfilled
     })
     it('non owner cannot mint with paying 0.2 ETH', async () => {
       const tokenId = 3
-      const fn = instance
-        .mintWithoutPixel(tokenId, {
-          value: 200000000000000000,
-          from: randomAddress,
-        })
+      const fn = instance.mintWithoutPixel(tokenId, {
+        value: 200000000000000000,
+        from: randomAddress,
+      })
       return expect(fn).to.be.rejected
     })
   })
 
-  // describe('gift', () => {
-  //   it('random address cannot gift', async () => {
-  //     const receivers = [randomAddress]
+  describe('changeNoPixelPrice', () => {
+    it('owner can change mint price for no pixel to 0.4', async () => {
+      const price = BigInt(300000000000000000)
+      const fn = instance
+        .changeNoPixelPrice(price, {
+          from: ownerAddress,
+        })
+        .catch((err) => console.log(err))
+      return expect(fn).to.be.fulfilled
+    })
+    it('non owner cannot change mint price for no pixel to 0.4', async () => {
+      const price = BigInt(300000000000000000)
+      const fn = instance.changeNoPixelPrice(price, {
+        from: randomAddress,
+      })
+      return expect(fn).to.be.rejected
+    })
+    it('owner cannot mint with price 0.2', async () => {
+      const tokenId = 3
+      const fn = instance.mintWithoutPixel(tokenId, {
+        value: 200000000000000000,
+        from: ownerAddress,
+      })
+      return expect(fn).to.be.rejected
+    })
+    it('owner can mint with new price 0.4', async () => {
+      const tokenId = 3
+      const fn = instance.mintWithoutPixel(tokenId, {
+        value: 400000000000000000,
+        from: ownerAddress,
+      })
+      return expect(fn).to.be.fulfilled
+    })
+  })
 
-  //     const fn = instance.gift(receivers, { from: randomAddress })
-
-  //     return expect(fn).to.be.rejectedWith('Ownable: caller is not the owner')
-  //   })
-
-  //   it('allow owner to gift', async () => {
-  //     const qty = 10
-  //     const receivers = []
-  //     for (let i = 0; i < qty; i++) {
-  //       receivers.push(randomAddress)
-  //     }
-
-  //     const fn = instance.gift(receivers, { from: ownerAddress })
-
-  //     return expect(fn).to.be.fulfilled
-  //   })
-  // })
+  describe('withdrawAll', () => {
+    it('owner can withdraw money from contract and the amount is correct', async () => {
+      let ownerBalance = await web3.eth.getBalance(ownerAddress)
+      let contractBalance = await web3.eth.getBalance(instance.address)
+      expect(Number(contractBalance)).to.be.not.equal(0)
+      const fn = instance
+        .withdrawAll({
+          from: ownerAddress,
+        })
+        .then(async () => {
+          let ownerBalanceAfter = await web3.eth.getBalance(ownerAddress)
+          let contractBalanceAfter = await web3.eth.getBalance(instance.address)
+          expect(Number(contractBalanceAfter)).to.be.equal(0)
+          expect(Number(ownerBalanceAfter)).to.be.greaterThan(
+            Number(ownerBalance),
+          )
+        })
+    })
+    it('random people cannot withdraw money from contract', async () => {
+      const fn = instance.withdrawAll({
+        from: randomAddress,
+      })
+      return expect(fn).to.be.rejected
+    })
+  })
 })

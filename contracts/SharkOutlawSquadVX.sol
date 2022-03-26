@@ -50,10 +50,6 @@ contract SharkOutlawSquadVX is Ownable, ERC721Enumerable {
             "Not genesis owner"
         );
         require(msg.value >= NOPIXEL_MINT_PRICE, "Insufficient ETH");
-        (bool success, ) = payable(msg.sender).call{value: NOPIXEL_MINT_PRICE}(
-            ""
-        );
-        require(success, "Ethereum Not Received");
         _safeMint(msg.sender, tokenId);
     }
 
