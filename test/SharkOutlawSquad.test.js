@@ -19,15 +19,15 @@ contract('SharkOutlawSquadVX', (addresses) => {
 
   before(async () => {
     instance = await SharkOutlawSquadVX.deployed()
-    instance.togglePublicSalesStatus()
+    await instance.togglePublicSalesStatus()
     await instance.transferOwnership(ownerAddress, { from: deployerAddress })
-    const SharkOutlawSquad = await SharkOutlawSquadContract.deployed()
-    const SharkOutlawSquadPixel = await SharkOutlawSquadPixelContract.deployed()
-    instance.setGenesisContractAddress=SharkOutlawSquad.address
-    instance.setPixelContractAddress=SharkOutlawSquadPixel.address
-    SharkOutlawSquad.gift([ownerAddress]) // id 1
-    SharkOutlawSquad.gift([ownerAddress]) // id 2
-    SharkOutlawSquadPixel.gift([ownerAddress]) // id 1
+    // const SharkOutlawSquad = await SharkOutlawSquadContract.deployed()
+    // const SharkOutlawSquadPixel = await SharkOutlawSquadPixelContract.deployed()
+    // instance.setGenesisContractAddress=SharkOutlawSquad.address
+    // instance.setPixelContractAddress=SharkOutlawSquadPixel.address
+    // SharkOutlawSquad.gift([ownerAddress]) // id 1
+    // SharkOutlawSquad.gift([ownerAddress]) // id 2
+    // SharkOutlawSquadPixel.gift([ownerAddress]) // id 1
   })
 
   describe('setContractURI', () => {
@@ -63,7 +63,7 @@ contract('SharkOutlawSquadVX', (addresses) => {
     it('owner cannot mint free without having pixel nft', async () => {
       
       const tokenId = 2
-      const fn = instance.mintWithPixel(tokenId, { from: ownerAddress })
+      const fn = instance.mintWithPixel(tokenId, { from: ownerAddress }).catch(err=>console.log(err))
       return expect(fn).to.be.rejected
     })
 

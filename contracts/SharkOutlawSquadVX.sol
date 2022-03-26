@@ -31,43 +31,21 @@ contract SharkOutlawSquadVX is Ownable, ERC721Enumerable {
     constructor() ERC721("Shark Outlaw Squad VX", "SHARKVX") {}
 
     function mintWithPixel(uint256 tokenId) external {
-        require(totalSupply() + 1 <= TOTAL_MAX_QTY, "Exceed total max limit");
         require(isSalesActivated, "Public sale is closed");
-        require(
-            tokenIdMinterToTokenQty[tokenId] + 1 <= 1,
-            "Exceed sales max quantity per Genesis NFT"
-        );
-        address genesisOwner = ERC721(_genesisSmartContract).ownerOf(tokenId);
-        address pixelOwner = ERC721(_pixelSmartContract).ownerOf(tokenId);
-        if (genesisOwner == msg.sender && pixelOwner == msg.sender) {
-            tokenIdMinterToTokenQty[tokenId] += 1;
-            publicMintedQty++;
-            _safeMint(msg.sender, totalSupply() + 1);
-        } else {
-            require(false, "Not Owner");
-        }
+        require(ERC721(_genesisSmartContract).ownerOf(tokenId) == msg.sender, "Not genesis owner");
+        require(ERC721(_pixelSmartContract).ownerOf(tokenId) == msg.sender, "Not pixel owner");
+        _safeMint(msg.sender, tokenId);
     }
 
     function mintWithoutPixel(uint256 tokenId) external payable {
-        require(totalSupply() + 1 <= TOTAL_MAX_QTY, "Exceed total max limit");
         require(isSalesActivated, "Public sale is closed");
-        require(
-            tokenIdMinterToTokenQty[tokenId] + 1 <= 1,
-            "Exceed sales max quantity per Genesis NFT"
-        );
-        address genesisOwner = ERC721(_genesisSmartContract).ownerOf(tokenId);
-        if (genesisOwner == msg.sender) {
-            require(msg.value >= NOPIXEL_MINT_PRICE, "Insufficient ETH");
-            (bool success, ) = payable(msg.sender).call{
-                value: NOPIXEL_MINT_PRICE
-            }("");
-            require(success, "Ethereum Not Received");
-            tokenIdMinterToTokenQty[tokenId] += 1;
-            publicMintedQty++;
-            _safeMint(msg.sender, totalSupply() + 1);
-        } else {
-            require(false, "Not Owner");
-        }
+        require(ERC721(_genesisSmartContract).ownerOf(tokenId) == msg.sender, "Not genesis owner");
+        require(msg.value >= NOPIXEL_MINT_PRICE, "Insufficient ETH");
+        (bool success, ) = payable(msg.sender).call{
+            value: NOPIXEL_MINT_PRICE
+        }("");
+        require(success, "Ethereum Not Received");
+        _safeMint(msg.sender, tokenId);
     }
 
     function changeNoPixelPrice(uint256 price)
