@@ -92,6 +92,14 @@ contract SharkOutlawSquadVX is Ownable, ERC721Enumerable {
         _contractURI = URI;
     }
 
+    function setGenesisContractAddress(address genesisAddress) external onlyOwner {
+        _genesisSmartContract = genesisAddress;
+    }
+
+     function setPixelContractAddress(address pixelAddress) external onlyOwner {
+        _pixelSmartContract = pixelAddress;
+    }
+
     // To support Opensea contract-level metadata
     // https://docs.opensea.io/docs/contract-level-metadata
     function contractURI() public view returns (string memory) {
