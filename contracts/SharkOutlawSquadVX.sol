@@ -18,9 +18,9 @@ contract SharkOutlawSquadVX is Ownable, ERC721Enumerable {
     uint256 public publicMintedQty = 0;
     mapping(uint256 => uint256) public tokenIdMinterToTokenQty;
     // Path to genesis and pixel smart contract
-    address private _genesisSmartContract =
+    address public _genesisSmartContract =
         0xd9145CCE52D386f254917e481eB44e9943F39138;
-    address private _pixelSmartContract =
+    address public _pixelSmartContract =
         0xf8e81D47203A594245E36C48e151709F0C19fBe8;
     string private _contractURI;
     string private _tokenBaseURI;
