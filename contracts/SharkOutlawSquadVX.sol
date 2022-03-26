@@ -32,18 +32,27 @@ contract SharkOutlawSquadVX is Ownable, ERC721Enumerable {
 
     function mintWithPixel(uint256 tokenId) external {
         require(isSalesActivated, "Public sale is closed");
-        require(ERC721(_genesisSmartContract).ownerOf(tokenId) == msg.sender, "Not genesis owner");
-        require(ERC721(_pixelSmartContract).ownerOf(tokenId) == msg.sender, "Not pixel owner");
+        require(
+            ERC721(_genesisSmartContract).ownerOf(tokenId) == msg.sender,
+            "Not genesis owner"
+        );
+        require(
+            ERC721(_pixelSmartContract).ownerOf(tokenId) == msg.sender,
+            "Not pixel owner"
+        );
         _safeMint(msg.sender, tokenId);
     }
 
     function mintWithoutPixel(uint256 tokenId) external payable {
         require(isSalesActivated, "Public sale is closed");
-        require(ERC721(_genesisSmartContract).ownerOf(tokenId) == msg.sender, "Not genesis owner");
+        require(
+            ERC721(_genesisSmartContract).ownerOf(tokenId) == msg.sender,
+            "Not genesis owner"
+        );
         require(msg.value >= NOPIXEL_MINT_PRICE, "Insufficient ETH");
-        (bool success, ) = payable(msg.sender).call{
-            value: NOPIXEL_MINT_PRICE
-        }("");
+        (bool success, ) = payable(msg.sender).call{value: NOPIXEL_MINT_PRICE}(
+            ""
+        );
         require(success, "Ethereum Not Received");
         _safeMint(msg.sender, tokenId);
     }
@@ -70,11 +79,14 @@ contract SharkOutlawSquadVX is Ownable, ERC721Enumerable {
         _contractURI = URI;
     }
 
-    function setGenesisContractAddress(address genesisAddress) external onlyOwner {
+    function setGenesisContractAddress(address genesisAddress)
+        external
+        onlyOwner
+    {
         _genesisSmartContract = genesisAddress;
     }
 
-     function setPixelContractAddress(address pixelAddress) external onlyOwner {
+    function setPixelContractAddress(address pixelAddress) external onlyOwner {
         _pixelSmartContract = pixelAddress;
     }
 
