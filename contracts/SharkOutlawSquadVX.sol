@@ -11,15 +11,11 @@ contract SharkOutlawSquadVX is Ownable, ERC721Enumerable {
     using Strings for uint256;
 
     // Specification
-    uint256 public constant TOTAL_MAX_QTY = 7777;
-    uint256 public constant MINT_PRICE = 0 ether;
     uint256 public NOPIXEL_MINT_PRICE = 0.2 ether;
 
     // Path to genesis and pixel smart contract
-    address public _genesisSmartContract =
-        0xd9145CCE52D386f254917e481eB44e9943F39138;
-    address public _pixelSmartContract =
-        0xf8e81D47203A594245E36C48e151709F0C19fBe8;
+    address public _genesisSmartContract;
+    address public _pixelSmartContract;
     string private _contractURI;
     string private _tokenBaseURI;
 
